@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KREDO</title>
+    <style>
+        :root {
+            --bg-base: #060907;
+            --bg-surface: #0a120d;
+            --bg-surface-2: #0f1912;
+            --text-primary: #d3ffe1;
+            --text-secondary: #8ed8a5;
+            --text-muted: #5f9a70;
+            --border: #21422d;
+            --border-strong: #2d5c3e;
+            --accent: #37ff81;
+            --accent-muted: rgba(55, 255, 129, 0.14);
+            --warning: #f2d06b;
+            --danger: #ff7f7f;
+            --success: #70ff9e;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.32);
+            --shadow-glow: 0 0 0 1px rgba(55, 255, 129, 0.2), 0 0 24px rgba(55, 255, 129, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 340px;
+            padding: 14px;
+            font-family: 'IBM Plex Mono', monospace;
+            background:
+                radial-gradient(420px 160px at 0% 0%, rgba(55, 255, 129, 0.08), transparent 70%),
+                var(--bg-base);
+            color: var(--text-primary);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #0b0f0d;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .logo-k {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: var(--accent);
+            color: #031008;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(55, 255, 129, 0.45);
+        }
+
+        .logo-wordmark {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .logo-redo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.01em;
+            line-height: 1;
+        }
+
+        .logo-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-left: 2px;
+            margin-bottom: 1px;
+            flex-shrink: 0;
+            align-self: flex-end;
+            box-shadow: 0 0 10px rgba(55, 255, 129, 0.45);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .popup-container {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #0b0f0d;
+            padding: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        #not-article p {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 10px;
+            line-height: 1.55;
+        }
+
+        .page-url {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: #0f1612;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            word-break: break-all;
+            line-height: 1.4;
+            max-height: 40px;
+            overflow: hidden;
+        }
+
+        #analyze-btn {
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--accent);
+            color: #031008;
+            border: 1px solid rgba(55, 255, 129, 0.45);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: filter 0.2s, transform 0.1s;
+            box-shadow: 0 0 0 1px rgba(55, 255, 129, 0.15), 0 0 14px rgba(55, 255, 129, 0.14);
+        }
+
+        #analyze-btn:hover {
+            filter: brightness(1.04);
+        }
+
+        #analyze-btn:active {
+            transform: scale(0.98);
+        }
+
+        .or-divider {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .or-divider span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        #query-input {
+            width: 100%;
+            padding: 9px 11px;
+            background: #0f1612;
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 12.5px;
+            margin-bottom: 8px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+
+        #query-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        #query-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(55, 255, 129, 0.36), 0 0 12px rgba(55, 255, 129, 0.12);
+        }
+
+        #analyze-query-btn {
+            width: 100%;
+            padding: 10px 16px;
+            background: #0f1612;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.1s;
+            font-family: inherit;
+        }
+
+        #analyze-query-btn:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(55, 255, 129, 0.08);
+        }
+
+        #analyze-query-btn:active {
+            transform: scale(0.98);
+        }
+
+        .pipeline-progress {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 4px 2px;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 11.8px;
+            line-height: 1.5;
+            animation: stepIn 0.3s ease-out both;
+        }
+
+        @keyframes stepIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-indicator {
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+            margin-top: 1px;
+        }
+
+        .step-active .step-indicator {
+            animation: stepPulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes stepPulse {
+            0%, 100% { opacity: 0.4; }
+            50%       { opacity: 1; }
+        }
+
+        .step-done    { color: var(--success); }
+        .step-active  { color: var(--accent); }
+        .step-pending { color: var(--text-muted); }
+
+        .pipeline-eta {
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .verdict {
+            border-radius: 10px;
+            padding: 14px;
+            background: #0f1612;
+            border: 1px solid var(--border);
+            animation: stepIn 0.4s ease-out both;
+        }
+
+        .verdict-fake {
+            border-color: rgba(255, 127, 127, 0.45);
+            background: rgba(201, 75, 75, 0.12);
+        }
+
+        .verdict-real {
+            border-color: rgba(112, 255, 158, 0.4);
+            background: rgba(46, 155, 99, 0.13);
+        }
+
+        .verdict-misleading {
+            border-color: rgba(242, 208, 107, 0.42);
+            background: rgba(217, 146, 43, 0.14);
+        }
+
+        .verdict-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .verdict h2 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.01em;
+        }
+
+        .verdict-fake h2       { color: #ff9d9d; }
+        .verdict-real h2       { color: #8bffb5; }
+        .verdict-misleading h2 { color: #ffdd8d; }
+
+        .score-badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+        }
+
+        .verdict-fake .score-badge       { background: rgba(201, 75, 75, 0.2); color: #ffd2d2; }
+        .verdict-real .score-badge       { background: rgba(46, 155, 99, 0.22); color: #c7ffdb; }
+        .verdict-misleading .score-badge { background: rgba(217, 146, 43, 0.22); color: #ffe2a5; }
+
+        .verdict p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 6px 0 0;
+            line-height: 1.55;
+        }
+
+        #view-details {
+            width: 100%;
+            margin-top: 11px;
+            padding: 8px 14px;
+            background: #0f1612;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            font-family: inherit;
+        }
+
+        #view-details:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(55, 255, 129, 0.08);
+        }
+
+        .error-msg {
+            font-size: 12px;
+            color: #ffd2d2;
+            background: rgba(201, 75, 75, 0.12);
+            border: 1px solid rgba(201, 75, 75, 0.35);
+            border-radius: 8px;
+            padding: 10px 12px;
+            line-height: 1.55;
+            animation: stepIn 0.3s ease-out both;
+        }
+
+        .retry-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            background: #0f1612;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .retry-btn:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(55, 255, 129, 0.08);
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="popup-container">
+        <div class="header">
+            <!-- K badge -->
+            <span class="logo-k">K</span>
+            <!-- REDO wordmark + verification dot -->
+            <div class="logo-wordmark">
+                <span class="logo-redo">REDO</span>
+                <span class="logo-dot"></span>
+            </div>
+        </div>
+
+        <!-- Initial state -->
+        <div id="not-article">
+            <p>Scan this page with our multi-agent AI pipeline to check for misinformation.</p>
+            <div id="current-url" class="page-url"></div>
+            <button id="analyze-btn" style="margin-bottom: 10px;">Analyze This Page</button>
+
+            <div class="or-divider"><span>OR</span></div>
+
+            <input type="text" id="query-input" placeholder="Paste URL or enter text…" />
+            <button id="analyze-query-btn">Analyze Input</button>
+        </div>
+
+        <!-- Loading / Pipeline progress -->
+        <div id="loading" class="hidden">
+            <div class="pipeline-progress" id="pipeline-steps"></div>
+            <div class="pipeline-eta" id="pipeline-eta">This usually takes 20–40 seconds</div>
+        </div>
+
+        <!-- Result -->
+        <div id="result" class="hidden">
+            <div id="verdict-container" class="verdict">
+                <div class="verdict-top">
+                    <h2 id="verdict-text"></h2>
+                    <span id="score-badge" class="score-badge"></span>
+                </div>
+                <p id="verdict-description"></p>
+                <button id="view-details">View Deep Analysis →</button>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div id="error-state" class="hidden">
+            <div class="error-msg" id="error-msg"></div>
+            <button class="retry-btn" id="retry-btn">Try Again</button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

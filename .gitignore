@@ -1,0 +1,6 @@
+.env
+__pycache__
+.venv
+.env.example
+instructions.md
+node_modules

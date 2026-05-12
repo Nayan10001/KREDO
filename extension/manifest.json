@@ -1,0 +1,29 @@
+{
+    "manifest_version": 3,
+    "name": "KREDO",
+    "version": "1.0.0",
+    "description": "AI-Powered Misinformation Detection — Quick fake/real verdict while browsing.",
+    "permissions": [
+        "activeTab",
+        "storage"
+    ],
+    "host_permissions": [
+        "http://localhost:8000/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}
