@@ -1600,6 +1600,47 @@ summary:focus-visible,
   }
 }
 
+/* ---------- Splash Screen ---------- */
+
+.splash-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  transition: opacity 0.45s ease;
+}
+
+.splash-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-enter {
+  animation: fadeInUp 0.35s ease-out;
+}
+
+/* ExportReport inline layout */
+.export-report {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.76rem;
+  transition: background 0.18s ease, filter 0.18s ease;
+}
+
+.export-button:hover:not(:disabled) {
+  background: rgba(69, 255, 162, 0.14);
+  filter: brightness(1.08);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

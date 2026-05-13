@@ -586,14 +586,18 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
                             else:
                                 # Final attempt: fall back to Gemini
                                 print("--- RATE LIMIT on Groq — falling back to Gemini Flash ---")
-                                structured_llm = _build_gemini_fact_checker_llm()
-                                chain = verdict_prompt | structured_llm
-                                response = chain.invoke({
-                                    "claim_text": claim_text,
-                                    "evidence_context": evidence_context,
-                                    "reasoning_text": reasoning_text,
-                                    "available_urls": "\n".join(allowed_urls),
-                                })
+                                try:
+                                    structured_llm = _build_gemini_fact_checker_llm()
+                                    chain = verdict_prompt | structured_llm
+                                    response = chain.invoke({
+                                        "claim_text": claim_text,
+                                        "evidence_context": evidence_context,
+                                        "reasoning_text": reasoning_text,
+                                        "available_urls": "\n".join(allowed_urls),
+                                    })
+                                except Exception as gemini_exc:  # noqa: BLE001
+                                    print(f"--- GEMINI FALLBACK FAILED: {gemini_exc} ---")
+                                    last_exc = gemini_exc
                                 break
                         else:
                             raise

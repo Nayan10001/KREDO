@@ -3,6 +3,7 @@ import URLInput from './components/URLInput';
 import AgentChain from './components/AgentChain';
 import ScoreDisplay from './components/ScoreDisplay';
 import HistoryPanel from './components/HistoryPanel';
+import CliLoader from './components/CliLoader';
 import { useAgentStream } from './hooks/useAgentStream';
 import { saveHistory } from './services/api';
 
@@ -11,6 +12,11 @@ function App() {
     const [submittedUrl, setSubmittedUrl] = useState<string>('');
     const [showHistory, setShowHistory] = useState(false);
     const [searchKey, setSearchKey] = useState(0);
+    const [showSplash, setShowSplash] = useState(() => {
+        // Skip splash when launched from Chrome extension (?url=...)
+        return !new URLSearchParams(window.location.search).get('url');
+    });
+    const [splashFading, setSplashFading] = useState(false);
 
     const { thoughts, isComplete, finalResult, startStream, startImageStream, resetStream } = useAgentStream();
 
@@ -68,11 +74,24 @@ function App() {
         if (isComplete) setIsAnalyzing(false);
     }, [isComplete]);
 
+    const handleSplashComplete = useCallback(() => {
+        setSplashFading(true);
+        setTimeout(() => setShowSplash(false), 450);
+    }, []);
+
     const isChatMode = isAnalyzing || thoughts.length > 0;
     const isImageSubmission = submittedUrl.startsWith('Image:');
 
+    if (showSplash) {
+        return (
+            <div className={`splash-screen${splashFading ? ' splash-fade-out' : ''}`}>
+                <CliLoader onComplete={handleSplashComplete} />
+            </div>
+        );
+    }
+
     return (
-        <div className="app">
+        <div className="app app-enter">
             <a href="#main-content" className="skip-link">Skip to main content</a>
             <header className="app-header">
                 <div className="logo-container">
