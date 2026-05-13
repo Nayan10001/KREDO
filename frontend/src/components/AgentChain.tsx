@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef, type ComponentType } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Zap, Globe, FileSearch, Search, Shield, Scale,
     MessageSquare, Image as ImageIcon, ChevronDown,
     CheckCircle2, XCircle, AlertTriangle, HelpCircle, Brain,
+    type LucideProps,
 } from 'lucide-react';
 import { AgentThought } from '../hooks/useAgentStream';
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type LucideIcon = ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+type LucideIcon = React.ForwardRefExoticComponent<LucideProps & React.RefAttributes<SVGSVGElement>>;
 
 type AgentId =
     | 'init' | 'multilingual' | 'claim_extraction' | 'evidence_retrieval'
