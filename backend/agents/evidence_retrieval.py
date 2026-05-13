@@ -185,7 +185,6 @@ def evidence_retrieval_node(state: "AgentState") -> "AgentState":
 			# Preserve deterministic order for the resulting map.
 			for claim_text in selected_claim_texts:
 				if not claim_text:
-					evidence_map[claim_text] = []
 					continue
 				future = futures_by_claim.get(claim_text)
 				if future is None:

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { ShieldCheck, ShieldQuestion, Info, AlertTriangle } from 'lucide-react';
 import { StreamResult } from '../hooks/useAgentStream';
 import { translateToEnglish } from '../services/api';
+import ExportReport from './ExportReport';
 
 interface Props {
     result: StreamResult;
@@ -249,6 +250,8 @@ export default function ScoreDisplay({ result }: Props) {
                         );
                     })}
                 </div>
+
+            <ExportReport result={result} />
         </section>
     );
 }

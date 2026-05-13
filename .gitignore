@@ -4,3 +4,5 @@ __pycache__
 .env.example
 instructions.md
 node_modules
+backend/history.json
+backend/*.png

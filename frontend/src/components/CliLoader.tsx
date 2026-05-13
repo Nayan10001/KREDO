@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 
 const ASCII_ART = `
-  _  __ _____   ______  _____    ____  
- | |/ /|  __ \\ |  ____||  __ \\  / __ \\ 
+  _  __ _____   ______  _____    ____
+ | |/ /|  __ \\ |  ____||  __ \\  / __ \\
  | ' / | |__) || |__   | |  | || |  | |
  |  <  |  _  / |  __|  | |  | || |  | |
  | . \\ | | \\ \\ | |____ | |__| || |__| |
- |_|\\_\\|_|  \\_\\|______||_____/  \\____/ 
+ |_|\\_\\|_|  \\_\\|______||_____/  \\____/
 `;
 
-export default function CliLoader() {
+interface Props {
+    onComplete?: () => void;
+}
+
+export default function CliLoader({ onComplete }: Props) {
     const [displayedText, setDisplayedText] = useState('');
     const [cursorVisible, setCursorVisible] = useState(true);
     const [isComplete, setIsComplete] = useState(false);
@@ -25,6 +29,7 @@ export default function CliLoader() {
             } else {
                 clearInterval(typingInterval);
                 setIsComplete(true);
+                onComplete?.();
             }
         }, 15);
 

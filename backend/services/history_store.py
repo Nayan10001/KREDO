@@ -26,6 +26,13 @@ class HistoryStoreError(RuntimeError):
 	"""Raised for history persistence failures."""
 
 
+def _coerce_avg_score(value: Any) -> int:
+	try:
+		return round(float(value))
+	except (TypeError, ValueError) as exc:
+		raise HistoryStoreError(f"avg_score must be numeric, got {value!r}") from exc
+
+
 class SupabaseHistoryStore:
 	TABLE_NAME = "history_entries"
 
@@ -41,7 +48,10 @@ class SupabaseHistoryStore:
 			)
 		if create_client is None:
 			raise HistoryStoreError("Supabase dependency missing. Install with: pip install supabase")
-		self._client = create_client(url, key)
+		try:
+			self._client = create_client(url, key)
+		except Exception as exc:
+			raise HistoryStoreError(f"Supabase client failed to initialise: {exc}") from exc
 
 	def _client_or_raise(self) -> Any:
 		if self._client is None:
@@ -68,7 +78,7 @@ class SupabaseHistoryStore:
 			"url": str(payload["url"]),
 			"timestamp": payload["timestamp"],
 			"overall_credibility": str(payload["overall_credibility"]),
-			"avg_score": int(payload["avg_score"]),
+			"avg_score": _coerce_avg_score(payload["avg_score"]),
 			"bottom_line": str(payload.get("bottom_line", "")),
 			"verdicts": payload.get("verdicts", []),
 			"explanations": payload.get("explanations", {}),
@@ -147,7 +157,7 @@ class SupabaseHistoryStore:
 	def prune_old_history(self, max_rows: int = 100) -> None:
 		client = self._client_or_raise()
 		try:
-			# Safety cap prevents a bad delete response from causing an infinite loop.
+			# Safety cap prevents an infinite loop if the delete silently fails.
 			max_iterations = 10
 			iterations = 0
 			while iterations < max_iterations:
@@ -160,6 +170,7 @@ class SupabaseHistoryStore:
 				)
 				rows = response.data or []
 				stale_ids = [row["id"] for row in rows if isinstance(row, dict) and row.get("id")]
+				# Exit condition: no stale rows remain — nothing left to delete.
 				if not stale_ids:
 					break
 				client.table(self.TABLE_NAME).delete().in_("id", stale_ids).execute()

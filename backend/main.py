@@ -13,6 +13,7 @@ This file:
 import asyncio
 import json
 import logging
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -20,7 +21,7 @@ from datetime import datetime, timezone
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Request, UploadFile
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -71,11 +72,14 @@ _original_print = _builtins.print
 
 def _logging_print(*args, **kwargs):
     sep = kwargs.get("sep", " ")
-    end = kwargs.get("end", "")   # absorbed — logger adds its own newline
+    end = kwargs.get("end", "\n")
     msg = sep.join(str(a) for a in args)
-    if msg.strip():               # skip blank print() calls
+    if msg.strip():
         _pipeline_logger.info(msg)
-    # Always flush so output appears immediately on Windows
+    # Pass non-default end values through so callers using end="\r" or end=""
+    # still get the expected terminal behaviour in addition to the log record.
+    if end not in ("\n", ""):
+        _sys.stdout.write(end)
     _sys.stdout.flush()
 
 _builtins.print = _logging_print
@@ -88,6 +92,7 @@ except Exception:  # noqa: BLE001
 
 
 MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024  # 5MB
+MAX_ANALYZE_INPUT_CHARS = 20_000           # ~5000 tokens; guards URL query param length
 
 
 def _json_default(value):
@@ -141,7 +146,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -162,6 +167,21 @@ async def request_logging_middleware(request: Request, call_next):
     elapsed_ms = (time.perf_counter() - started) * 1000
     logger.info("⬅ %s %s -> %d (%.1f ms)", request.method, request.url.path, response.status_code, elapsed_ms)
     return response
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# History auth — optional shared-secret gate
+# Set HISTORY_API_KEY in backend/.env to enable.
+# All /api/history routes then require: X-API-Key: <value>
+# Leave unset to disable auth (default — no breaking change).
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def _require_history_key(request: Request) -> None:
+    required_key = _os.getenv("HISTORY_API_KEY", "").strip()
+    if not required_key:
+        return
+    provided = request.headers.get("X-API-Key", "")
+    if provided != required_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key header")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -241,6 +261,11 @@ async def analyze_stream(user_input: str | None = None):
     """
     from agents.claim_extraction import claim_extraction_graph
     clean_input = _require_non_empty_input(user_input)
+    if len(clean_input) > MAX_ANALYZE_INPUT_CHARS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Input too large. Max allowed size is {MAX_ANALYZE_INPUT_CHARS} characters.",
+        )
     logger.info("[/api/analyze-stream] request received (input_len=%d)", len(clean_input))
 
     async def event_generator():
@@ -347,12 +372,30 @@ async def analyze_image_stream_endpoint(file: UploadFile = File(...)):
                 pipeline_input = translated if translated else ocr_text
                 yield _sse_data({'type': 'agent_log', 'symbol': '→', 'message': 'Running full fact-check pipeline on extracted image text...'})
 
-                # ── Step 3: full pipeline on OCR text ─────────────────────────
+                # ── Step 3: stream pipeline events in real-time via queue ──────
                 _detected_lang_name: str | None = None
-                pipeline_events = await asyncio.to_thread(
-                    lambda: list(claim_extraction_graph.stream(_build_initial_state(pipeline_input)))
-                )
-                for event in pipeline_events:
+                _event_queue: asyncio.Queue = asyncio.Queue()
+                _loop = asyncio.get_event_loop()
+
+                def _run_pipeline_thread():
+                    try:
+                        for _ev in claim_extraction_graph.stream(_build_initial_state(pipeline_input)):
+                            _loop.call_soon_threadsafe(_event_queue.put_nowait, _ev)
+                    except Exception as _exc:  # noqa: BLE001
+                        _loop.call_soon_threadsafe(_event_queue.put_nowait, _exc)
+                    finally:
+                        _loop.call_soon_threadsafe(_event_queue.put_nowait, None)
+
+                _pipeline_thread = threading.Thread(target=_run_pipeline_thread, daemon=True)
+                _pipeline_thread.start()
+
+                while True:
+                    item = await _event_queue.get()
+                    if item is None:
+                        break
+                    if isinstance(item, Exception):
+                        raise item
+                    event = item
                     if not isinstance(event, dict):
                         logger.warning("[/api/analyze-image-stream] unexpected event type: %s", type(event).__name__)
                         continue
@@ -371,6 +414,8 @@ async def analyze_image_stream_endpoint(file: UploadFile = File(...)):
                             yield _sse_data({'type': 'agent_log', 'symbol': '→', 'message': f'Detected {_detected_lang_name} — translating via Sarvam AI'})
                         if node_name == "agent0_post" and node_data.get("localized_output") and _detected_lang_name:
                             yield _sse_data({'type': 'agent_log', 'symbol': '✓', 'message': f'Verdicts localized back to {_detected_lang_name}'})
+
+                _pipeline_thread.join(timeout=5)
             else:
                 yield _sse_data({'type': 'agent_log', 'symbol': '·', 'message': 'No text found in image — EXIF analysis complete'})
 
@@ -439,7 +484,7 @@ class HistorySaveRequest(BaseModel):
 
 
 @app.get("/api/history")
-async def get_history():
+async def get_history(_: None = Depends(_require_history_key)):
     """Return all saved analysis history entries."""
     from services.history_store import history_store
     from services.history_store import HistoryStoreError
@@ -452,7 +497,7 @@ async def get_history():
 
 
 @app.post("/api/history")
-async def save_history(req: HistorySaveRequest):
+async def save_history(req: HistorySaveRequest, _: None = Depends(_require_history_key)):
     """Save a history entry (called by frontend after stream completes)."""
     from services.history_store import history_store
     from services.history_store import HistoryStoreError
@@ -471,7 +516,7 @@ async def save_history(req: HistorySaveRequest):
 
 
 @app.delete("/api/history/{entry_id}")
-async def delete_history_entry(entry_id: str):
+async def delete_history_entry(entry_id: str, _: None = Depends(_require_history_key)):
     """Delete a single history entry by ID."""
     from services.history_store import history_store
     from services.history_store import HistoryStoreError

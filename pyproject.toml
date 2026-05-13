@@ -1,0 +1,39 @@
+[project]
+name = "kredo"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4==4.12.3",
+    "fastapi==0.109.0",
+    "groq>=0.11.0,<1.0.0",
+    "httpx==0.26.0",
+    "langchain-community>=0.3.0,<0.4.0",
+    "langchain-core>=0.3.0,<0.4.0",
+    "langchain-google-genai>=2.0.0,<3.0.0",
+    "langchain-groq>=0.2.0,<0.4.0",
+    "langgraph>=0.2.0,<0.4.0",
+    "lxml-html-clean==0.4.1",
+    "newspaper3k==0.2.8",
+    "pillow>=10.0.0",
+    "pydantic>=2.7.4,<3.0.0",
+    "pydantic-settings>=2.1.0,<3.0.0",
+    "pytest==8.0.0",
+    "pytest-asyncio==0.23.0",
+    "python-dotenv==1.0.0",
+    "python-multipart>=0.0.9",
+    "pyyaml>=6.0,<7.0",
+    "requests>=2.31.0,<3.0.0",
+    "sarvamai>=0.1.0",
+    "supabase>=2.4.0,<3.0.0",
+    "tavily-python>=0.3.0,<1.0.0",
+    "torch>=2.2.0,<2.11.0",
+    "transformers==4.36.0",
+    "uvicorn==0.27.0",
+]
+
+[tool.pyright]
+extraPaths = ["backend"]
+venvPath = "backend"
+venv = ".venv"
