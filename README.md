@@ -1,64 +1,115 @@
-## KREDO
+<div align="center">
+  <h1>KREDO</h1>
+  <p><strong>A Multi-Agent Fake News Detection & Fact-Checking Ecosystem</strong></p>
 
-KREDO is a lightweight fake-news detection and fact-checking app with three parts:
+  <p>
+    <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-blue.svg?style=for-the-badge&logo=python&logoColor=white" />
+    <img alt="React" src="https://img.shields.io/badge/React-18-blue.svg?style=for-the-badge&logo=react&logoColor=white" />
+    <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.100+-blue.svg?style=for-the-badge&logo=fastapi&logoColor=white" />
+    <img alt="LangGraph" src="https://img.shields.io/badge/LangGraph-Agentic-blue.svg?style=for-the-badge&logo=langchain&logoColor=white" />
+  </p>
+</div>
 
-- `backend/` for the FastAPI API and agent pipeline
-- `frontend/` for the React + Vite UI
-- `extension/` for the Chrome extension
+<hr />
 
-## What it does
+## 🌟 Overview
 
-The app takes a URL, article text, or image and checks it through a multi-agent fact-checking flow. The UI shows a chat-style analysis view with live progress updates, a final credibility result, source citations, and saved history.
+**KREDO** is a lightweight, high-precision fake-news detection and fact-checking application. It takes a URL, article text, or image and analyzes it through an advanced multi-agent fact-checking pipeline. 
 
-## Agent orchestration
+The application provides a sleek, clinical UI featuring live progress updates, comprehensive source citations, final credibility verdicts, and a verifiable history of past analyses.
 
-KREDO uses 5 agents in a fixed pipeline:
+---
 
-1. Claim extraction
-2. Evidence retrieval
-3. Source credibility scoring
-4. Fact checking
-5. Explanation generation
+## 🏗️ Architecture
 
-The backend streams each step through LangGraph so the frontend can show progress as the analysis runs.
+KREDO is built as a three-part ecosystem:
 
-## Backend, frontend, and extension
+- 🧠 **Backend (`backend/`)**: FastAPI-based API and the core agent pipeline powered by LangGraph.
+- 🎨 **Frontend (`frontend/`)**: Modern React + Vite UI demonstrating the "Verifiable Intelligence" design language.
+- 🧩 **Extension (`extension/`)**: A Chrome extension for instant URL checking directly from your browser.
 
-- Backend: FastAPI app in `backend/main.py` with the agent graph and analysis endpoints.
-- Frontend: React app in `frontend/` with the main chat UI, history panel, and result cards.
-- Extension: Chrome extension in `extension/` that sends a page URL to the app for quick checks.
+---
 
-## Requirements
+## 🕵️‍♂️ The 5-Agent Pipeline
+
+KREDO orchestrates a fixed pipeline of specialized agents. The backend streams each step via LangGraph, enabling real-time UI updates:
+
+1. **Claim Extraction**: Isolates core claims from the provided text, image, or URL.
+2. **Evidence Retrieval**: Gathers supporting or refuting evidence across the web.
+3. **Source Credibility Scoring**: Evaluates the reliability and bias of the sources.
+4. **Fact Checking**: Cross-references claims against the retrieved evidence.
+5. **Explanation Generation**: Synthesizes a clear, human-readable final verdict.
+
+---
+
+## ✨ Features
+
+- **Multi-Modal Input:** Support for text, URL, and image analysis.
+- **Real-Time Progress:** Watch the 5-agent pipeline think and execute in real-time.
+- **Verifiable Intelligence UI:** A high-precision, clinical interface built for trust and clarity.
+- **Seamless Browser Integration:** One-click checking via the Chrome Extension.
+- **History Tracking:** Save and review past credibility analyses.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Python 3.10+
 - Node.js 16+
 
-## Run locally
-
-Backend:
+### 1. Backend Setup
 
 ```bash
+# Navigate to the project root
 python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
 .venv\Scripts\activate
+# On Mac/Linux:
+# source .venv/bin/activate
+
+# Install dependencies
 pip install -r backend/requirements.txt
+
+# Start the FastAPI server
 python backend/main.py
 ```
 
-Frontend:
+### 2. Frontend Setup
+
+Open a new terminal window:
 
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start the Vite development server
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal, usually `http://localhost:5173`.
+Visit the local Vite URL, typically `http://localhost:5173`.
 
-## Chrome extension
+### 3. Chrome Extension Setup
 
-Load the `extension/` folder as an unpacked extension in Chrome Developer mode.
+1. Open Chrome and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** in the top right corner.
+3. Click **Load unpacked**.
+4. Select the `extension/` folder from this repository.
+5. The KREDO extension is now ready to use!
 
-## Notes
+---
 
-- Keep secrets out of Git.
-- If Git warns about line endings on Windows, add a `.gitattributes` file with `* text=auto`.
+## 🛠️ Notes
+
+- **Security:** Ensure that `.env` files and secrets are never committed to Git.
+- **Line Endings:** If Git warns about line endings on Windows, ensure you have a `.gitattributes` file with `* text=auto`.
+
+<br/>
+<div align="center">
+  <sub>Built with ❤️ for a more truthful web.</sub>
+</div>
