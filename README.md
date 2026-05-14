@@ -91,6 +91,18 @@ The current project uses a small set of model providers rather than a single mon
 
 Source credibility scoring is handled locally in code and does not call an external model.
 
+### Pipeline Configuration
+
+Most agent defaults are controlled in [backend/core/config.yaml](backend/core/config.yaml). That file is the central place to tune each stage without editing code directly. You can adjust:
+
+- `model` and `provider` for the Groq-backed agents
+- `temperature` and output mode settings
+- evidence retrieval limits such as `tavily_max_results` and `max_parallel_workers`
+- source credibility tier scores
+- image and multilingual feature flags
+
+If a value is not set in `config.yaml`, the code falls back to a built-in default in the corresponding agent module.
+
 ---
 
 ## ✨ Features
