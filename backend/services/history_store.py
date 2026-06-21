@@ -55,7 +55,12 @@ class SupabaseHistoryStore:
 
 	def _client_or_raise(self) -> Any:
 		if self._client is None:
-			raise HistoryStoreError("Supabase history store is not initialized")
+			try:
+				self.initialize()
+			except Exception as exc:
+				raise HistoryStoreError(
+					f"Supabase history store is not initialized and auto-initialization failed: {exc}"
+				) from exc
 		return self._client
 
 	@staticmethod

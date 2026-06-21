@@ -92,15 +92,15 @@ REASONING_PROMPT = """
 You are a fact-checking analyst. Analyze the claim against the provided evidence snippets only — do not use outside knowledge.
 
 Rules:
-- Only cite information present in the snippets
+- STRICT GROUNDING: Only cite information explicitly present in the snippets. Do NOT assume, extrapolate, or hallucinate any facts, dates, names, or numbers.
+- HEADLINE-MATCHING BIAS WARNING: Do NOT classify a snippet as DIRECT confirming evidence if it only repeats the headline or high-level subject without providing the actual supporting details. The snippet's body must verify the specific assertions (e.g. specific numbers, metrics, names, actions) of the claim.
+- If the claim asserts a specific detail (e.g., "500% increase", "10 million dollars", "on Friday June 12") and the snippet confirms the general event but does not mention the specific detail/metric, mark that specific part as a GAP. Do NOT assume the detail is verified.
 - Mark anything absent from evidence as "Gap"
 - Do NOT output a JSON or a verdict label
 
 CRITICAL DISTINCTION — read this before starting:
-Direct evidence: A snippet that explicitly states, confirms, or contradicts the
-specific people, numbers, and action in the claim.
-Contextual evidence: A snippet about the broader situation, background, or related
-topic but does NOT directly address the specific claim.
+Direct evidence: A snippet that explicitly states, confirms, or contradicts the specific people, numbers, and action in the claim.
+Contextual evidence: A snippet about the broader situation, background, or related topic but does NOT directly address or verify the specific details of the claim.
 
 Example:
     Claim: "Iran allowed two Indian LPG carriers through the Strait of Hormuz"
@@ -114,10 +114,9 @@ For every snippet write one line:
     "[Domain] (score/100): DIRECT or CONTEXT — <one sentence of what it says>"
 
 STEP 2 — Sub-claim check (using DIRECT evidence only):
-Break the claim into its checkable parts. For each part mark:
+Break the claim into its checkable parts (e.g. subject, actions, specific metrics/numbers). For each part mark:
     CONFIRMED / CONTRADICTED / INFERRED / GAP
-Only use DIRECT evidence snippets for this step. CONTEXT snippets cannot confirm
-or contradict specific claims — do not use them for sub-claim verdicts.
+Only use DIRECT evidence snippets for this step. CONTEXT snippets cannot confirm or contradict specific claims — do not use them for sub-claim verdicts.
 
 STEP 3 — Contradictions (DIRECT snippets only):
 Note any conflicting DIRECT snippets. Higher credibility score wins.
@@ -129,7 +128,7 @@ These affect evidence_gaps but NOT the verdict label or truth_score.
 
 STEP 5 — Verdict reasoning:
 2-3 sentences covering:
-    - What the DIRECT evidence confirms or denies
+    - What the DIRECT evidence confirms or denies (highlighting any missing details or headline-only matches)
     - What gaps remain in the DIRECT evidence
     - What verdict and confidence level this points to
     - Do NOT reduce confidence because CONTEXT snippets are ambiguous

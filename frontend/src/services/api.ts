@@ -24,7 +24,7 @@ export async function analyzeSimple(url: string) {
 }
 
 export async function getHistory() {
-    const response = await fetch(`${API_BASE_URL}/api/history`);
+    const response = await fetch(`${API_BASE_URL}/api/history?_cb=${Date.now()}`);
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return response.json();
 }

@@ -3,7 +3,7 @@ name = "kredo"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4==4.12.3",
     "fastapi==0.109.0",
@@ -28,7 +28,6 @@ dependencies = [
     "sarvamai>=0.1.0",
     "supabase>=2.4.0,<3.0.0",
     "tavily-python>=0.3.0,<1.0.0",
-    "torch>=2.2.0,<2.11.0",
     "transformers==4.36.0",
     "uvicorn==0.27.0",
 ]

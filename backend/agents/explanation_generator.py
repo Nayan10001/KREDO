@@ -139,10 +139,9 @@ WRITING RULES:
   "assert", "snippet", or "evidence context"
 - Maximum 4 sentences for plain_english per verdict
 - Be honest about uncertainty — do not oversell confidence
-- Be specific — say what the evidence actually showed, not just
-  "evidence supports this claim"
-- Never say "the model" or "the analyst" — write as if you personally
-  reviewed the sources
+- DETAIL ORIENTATION & DEPTH: Do NOT just summarize the claim or repeat the article's headline/top-line summary. Present the actual underlying details, specific numbers, and findings from the evidence reasoning (e.g. what specific data or facts supported/contradicted the claim). Say what the evidence actually showed in concrete terms.
+- STRICT GROUNDING: Ground all explanations strictly in the provided technical reasoning. Do NOT invent, assume, or hallucinate any facts, dates, names, or metrics not explicitly documented in the technical reasoning.
+- Never say "the model" or "the analyst" — write as if you personally reviewed the sources
 
 SOURCE QUALITY LANGUAGE — use exactly these phrases based on tier:
 - Tier 1 (score 90-100): "confirmed by major wire services"
