@@ -30,9 +30,22 @@ dependencies = [
     "tavily-python>=0.3.0,<1.0.0",
     "transformers==4.36.0",
     "uvicorn==0.27.0",
+    "tenacity>=8.2.3,<9.0.0",
 ]
 
 [tool.pyright]
 extraPaths = ["backend"]
 venvPath = "backend"
 venv = ".venv"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501", "E402"]
+
+[tool.pytest.ini_options]
+addopts = "-p no:asyncio"
+

@@ -6,11 +6,8 @@ UI-ready verdict objects for downstream presentation.
 
 from __future__ import annotations
 
-import os
-import importlib
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
@@ -78,6 +75,26 @@ class FactCheckVerdict(BaseModel):
         description="Sub-parts of the claim not addressed by evidence",
     )
 
+    @field_validator("verdict", mode="before")
+    @classmethod
+    def _coerce_verdict(cls, value: object) -> object:
+        """Coerce common LLM verdict variants to strict allowed VerdictLabel values."""
+        if isinstance(value, str):
+            val_upper = value.strip().upper()
+            if val_upper in ("PARTIALLY_CONFIRMED", "PARTIALLY_SUPPORTED", "PARTIAL", "MIXED", "MOSTLY_SUPPORTED", "MOSTLY_CONFIRMED"):
+                return VerdictLabel.MISLEADING
+            if val_upper in ("CONFIRMED", "TRUE", "CORRECT"):
+                return VerdictLabel.SUPPORTED
+            if val_upper in ("FALSE", "DENIED", "REFUTED"):
+                return VerdictLabel.CONTRADICTED
+            if val_upper in ("UNCERTAIN", "UNKNOWN", "NOT_VERIFIED"):
+                return VerdictLabel.UNVERIFIED
+            # Try to match direct Enum values
+            for enum_val in VerdictLabel:
+                if val_upper == enum_val.value:
+                    return enum_val
+        return value
+
     @field_validator("evidence_gaps", "citations", mode="before")
     @classmethod
     def _coerce_str_to_list(cls, value: object) -> object:
@@ -86,6 +103,7 @@ class FactCheckVerdict(BaseModel):
             stripped = value.strip()
             return [stripped] if stripped else []
         return value
+
 
 
 REASONING_PROMPT = """
@@ -214,21 +232,8 @@ def _build_fact_checker_llm(model: str | None = None) -> Any:
 
 def _build_gemini_fact_checker_llm() -> Any:
     """Gemini Flash fallback when Groq daily token quota is exhausted."""
-    from langchain_google_genai import ChatGoogleGenerativeAI
-
-    gemini_api_key = _read_env_var("GEMINI_API_KEY", "gemini_api_key")
-    if not gemini_api_key:
-        raise RuntimeError("Missing Gemini API key. Set GEMINI_API_KEY in .env")
-
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
-        google_api_key=gemini_api_key,
-        temperature=0,
-    )
-    return llm.with_structured_output(
-        FactCheckVerdict,
-        method="json_mode",
-    )
+    from services.gemini_service import gemini_service
+    return gemini_service.build_structured_llm(FactCheckVerdict)
 
 
 def _build_reasoning_llm() -> Any:
@@ -289,18 +294,37 @@ def _run_reasoning_step(
             return reasoning_text
         except Exception as exc:  # noqa: BLE001
             err_str = str(exc)
-            if "429" in err_str or "rate_limit" in err_str.lower():
+            if "429" in err_str or "rate_limit" in err_str.lower() or "overloaded" in err_str.lower():
                 wait = (2 ** attempt) * 5  # 5s, 10s, 20s
                 print(f"--- RATE LIMIT (reasoning, attempt {attempt + 1}) — waiting {wait}s ---")
                 time.sleep(wait)
                 last_exc = exc
             else:
                 raise
-    raise last_exc  # type: ignore[misc]
+
+    print("--- RATE LIMIT on Groq reasoning (all attempts exhausted) — falling back to Gemini Flash ---")
+    try:
+        from services.gemini_service import gemini_service
+        gemini_llm = gemini_service.build_plain_llm()
+        gemini_chain = reasoning_prompt | gemini_llm
+        response = gemini_chain.invoke({
+            "claim_text": claim_text,
+            "evidence_context": evidence_context,
+        })
+        reasoning_text = response.content
+        if len(reasoning_text.strip()) < 100:
+            raise ValueError(f"Gemini reasoning output too short: {reasoning_text}")
+        return reasoning_text
+    except Exception as gemini_exc:
+        print(f"--- GEMINI FALLBACK FAILED: {gemini_exc} ---")
+        if last_exc is not None:
+            raise last_exc
+        raise
+
 
 
 def _is_http_url(value: str) -> bool:
-    parsed = urlparse(str(value or "").strip())
+    parsed = urlparse((value or "").strip())
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
@@ -364,7 +388,7 @@ def _normalize_citations(citations: list[str], allowed_urls: list[str]) -> list[
     seen: set[str] = set()  # tracks canonical forms already accepted
 
     for raw in citations:
-        candidate = str(raw or "").strip()
+        candidate = (raw or "").strip()
         if not candidate or not _is_http_url(candidate):
             continue
         canon = _canonicalize_url(candidate)
@@ -385,7 +409,7 @@ def _fallback_unverified(claim_text: str, reason: str) -> dict[str, Any]:
         explanation = LLM_ERROR_EXPLANATION
 
     return FactCheckVerdict(
-        claim_text=str(claim_text or "").strip() or "Unknown claim",
+        claim_text=(claim_text or "").strip() or "Unknown claim",
         verdict=VerdictLabel.UNVERIFIED,
         truth_score=50,
         explanation=explanation,
@@ -466,7 +490,7 @@ def _escalation_search(claim_text: str) -> list[dict[str, str]]:
         try:
             from agents.evidence_retrieval import _run_tavily_query
         except ImportError:
-            from evidence_retrieval import _run_tavily_query
+            from evidence_retrieval import _run_tavily_query  # type: ignore
 
         # Pass 1: wire service targeted
         wire_query = f"{claim_text[:120]} reuters OR apnews OR BBC"
@@ -502,9 +526,11 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
             print("--- LLM INITIALIZATION SUCCESSFUL ---")
         except Exception as exc:  # noqa: BLE001
             print(f"--- LLM INITIALIZATION FAILED: {exc} ---")
-            updated_state = dict(state)
-            updated_state["verdicts"] = []
-            updated_state["error"] = f"Failed to initialize LLMs: {exc}"
+            updated_state: AgentState = {
+                **state,
+                "verdicts": [],
+                "error": f"Failed to initialize LLMs: {exc}",
+            }
             return updated_state
 
         verdict_prompt = ChatPromptTemplate.from_messages([
@@ -560,46 +586,52 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
 
                 # ── CALL 2: Structured verdict using reasoning ────────────
                 print("--- VERDICT STEP (CALL 2) ---")
-                chain = verdict_prompt | structured_llm
-
-                # Retry with backoff on 429; fall back to 8b if 70b daily limit exhausted
+                
                 last_exc: Exception | None = None
                 response = None
-                for attempt in range(3):
+                fallback_active = False
+
+                models_to_try = [
+                    ("llama-3.3-70b-versatile", "Groq 70B"),
+                    ("llama-3.1-8b-instant", "Groq 8B"),
+                ]
+
+                for model_name, friendly_name in models_to_try:
                     try:
+                        print(f"--- TRYING VERDICT MODEL: {friendly_name} ---")
+                        structured_llm = _build_fact_checker_llm(model=model_name)
+                        chain = verdict_prompt | structured_llm
                         response = chain.invoke({
                             "claim_text": claim_text,
                             "evidence_context": evidence_context,
                             "reasoning_text": reasoning_text,
                             "available_urls": "\n".join(allowed_urls),
                         })
+                        if model_name != "llama-3.3-70b-versatile":
+                            fallback_active = True
                         break
                     except Exception as exc:  # noqa: BLE001
-                        err_str = str(exc)
-                        if "429" in err_str or "rate_limit" in err_str.lower():
-                            if attempt < 2:
-                                wait = (2 ** attempt) * 5  # 5s, 10s
-                                print(f"--- RATE LIMIT (verdict, attempt {attempt + 1}) — waiting {wait}s ---")
-                                time.sleep(wait)
-                                last_exc = exc
-                            else:
-                                # Final attempt: fall back to Gemini
-                                print("--- RATE LIMIT on Groq — falling back to Gemini Flash ---")
-                                try:
-                                    structured_llm = _build_gemini_fact_checker_llm()
-                                    chain = verdict_prompt | structured_llm
-                                    response = chain.invoke({
-                                        "claim_text": claim_text,
-                                        "evidence_context": evidence_context,
-                                        "reasoning_text": reasoning_text,
-                                        "available_urls": "\n".join(allowed_urls),
-                                    })
-                                except Exception as gemini_exc:  # noqa: BLE001
-                                    print(f"--- GEMINI FALLBACK FAILED: {gemini_exc} ---")
-                                    last_exc = gemini_exc
-                                break
-                        else:
-                            raise
+                        print(f"--- ERROR on {friendly_name}: {exc} ---")
+                        last_exc = exc
+                        fallback_active = True
+                        continue
+
+
+                if response is None:
+                    print("--- RATE LIMIT on Groq — falling back to Gemini Flash ---")
+                    try:
+                        structured_llm = _build_gemini_fact_checker_llm()
+                        chain = verdict_prompt | structured_llm
+                        response = chain.invoke({
+                            "claim_text": claim_text,
+                            "evidence_context": evidence_context,
+                            "reasoning_text": reasoning_text,
+                            "available_urls": "\n".join(allowed_urls),
+                        })
+                        fallback_active = True
+                    except Exception as gemini_exc:  # noqa: BLE001
+                        print(f"--- GEMINI FALLBACK FAILED: {gemini_exc} ---")
+                        last_exc = gemini_exc
 
                 if response is None:
                     if last_exc is not None:
@@ -621,6 +653,8 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
                     normalized.get("citations", []),
                     allowed_urls,
                 )
+
+
 
                 verdict = FactCheckVerdict.model_validate(normalized)
                 final_reasoning_text = reasoning_text
@@ -646,7 +680,7 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
                                 try:
                                     from agents.source_credibility import _score_snippet
                                 except ImportError:
-                                    from source_credibility import _score_snippet
+                                    from source_credibility import _score_snippet  # type: ignore
                                 augmented_snippets = [_score_snippet(s) for s in augmented_snippets]
 
                                 augmented_context, augmented_allowed_urls = _build_claim_context(
@@ -692,6 +726,7 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
                 verdict_payload = verdict.model_dump()
                 # Include free-form chain-of-thought so the frontend can display it
                 verdict_payload["reasoning_text"] = final_reasoning_text
+                verdict_payload["fallback_active"] = fallback_active
                 verdicts.append(verdict_payload)
                 print(
                     f"--- VERDICT: {verdict_payload['verdict']} "
@@ -713,12 +748,16 @@ def fact_checker_node(state: "AgentState") -> "AgentState":
                     f"({fallback['truth_score']}) ---"
                 )
 
-        updated_state = dict(state)
-        updated_state["verdicts"] = verdicts
+        updated_state: AgentState = {
+            **state,
+            "verdicts": verdicts,
+        }
         return updated_state
 
     except Exception as exc:  # noqa: BLE001
-        updated_state = dict(state)
-        updated_state["verdicts"] = updated_state.get("verdicts", [])
-        updated_state["error"] = str(exc)
+        updated_state: AgentState = {
+            **state,
+            "verdicts": state.get("verdicts", []),
+            "error": str(exc),
+        }
         return updated_state

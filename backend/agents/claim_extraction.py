@@ -12,7 +12,6 @@ Designed to be extended with additional nodes (e.g., evidence retrieval).
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any, NotRequired, Optional, TypedDict
 from urllib.parse import urlparse
@@ -38,31 +37,31 @@ except ModuleNotFoundError as exc:
     # Support direct script execution from backend/agents where "agents" isn't on sys.path.
     if exc.name != "agents":
         raise
-    from evidence_retrieval import evidence_retrieval_node
+    from evidence_retrieval import evidence_retrieval_node  # type: ignore
 
 try:
     from agents.fact_checker import fact_checker_node
 except ModuleNotFoundError as exc:
     if exc.name != "agents":
         raise
-    from fact_checker import fact_checker_node
+    from fact_checker import fact_checker_node  # type: ignore
 
 try:
     from agents.source_credibility import source_credibility_node
 except ModuleNotFoundError as exc:
     if exc.name != "agents":
         raise
-    from source_credibility import source_credibility_node
+    from source_credibility import source_credibility_node  # type: ignore
 
 try:
     from agents.explanation_generator import explanation_generator_node
 except ModuleNotFoundError:
-    from explanation_generator import explanation_generator_node
+    from explanation_generator import explanation_generator_node  # type: ignore
 
 try:
-    from agents.agent0_multilingual import agent0_pre_node, agent0_post_node
+    from agents.agent0_multilingual import agent0_post_node, agent0_pre_node
 except ModuleNotFoundError:
-    from agent0_multilingual import agent0_pre_node, agent0_post_node  # type: ignore[no-redef]
+    from agent0_multilingual import agent0_post_node, agent0_pre_node  # type: ignore[no-redef]
 
 try:
     from agents.image_integrity import image_integrity_node
@@ -91,7 +90,7 @@ class AgentState(TypedDict):
     credibility_map: NotRequired[dict[str, list[dict[str, Any]]]]
     explanations: NotRequired[dict[str, Any]]
     verdicts: list[dict[str, Any]]
-    top_n: Optional[int]
+    top_n: NotRequired[Optional[int]]
     pub_date: Optional[str]
     author: Optional[str]
     source_domain: Optional[str]
@@ -185,12 +184,12 @@ URL_RE = re.compile(r"^https?://[^\s]+$", re.IGNORECASE)
 
 def is_url(text: str) -> bool:
     """Return True when text is an http(s) URL."""
-    return bool(URL_RE.match(str(text or "").strip()))
+    return bool(URL_RE.match((text or "").strip()))
 
 
 def _is_low_context_text(text: str) -> bool:
     """Heuristic low-context gate for very short text rumors/headlines."""
-    return len(str(text or "").strip().split()) < 3
+    return len((text or "").strip().split()) < 3
 
 
 def scrape_article(url: str) -> str:
@@ -383,7 +382,23 @@ def _extract_claims_with_llm(markdown: str, top_n: int) -> list[dict[str, Any]]:
     )
 
     chain = prompt | structured_llm
-    response = chain.invoke({"article_markdown": markdown})
+    try:
+        response = chain.invoke({"article_markdown": markdown})
+    except Exception as exc:
+        err_str = str(exc)
+        if "429" in err_str or "rate_limit" in err_str.lower() or "overloaded" in err_str.lower():
+            print("--- RATE LIMIT on Groq claim extraction — falling back to Gemini Flash ---")
+            try:
+                from services.gemini_service import gemini_service
+                gemini_llm = gemini_service.build_structured_llm(ClaimExtractionResult)
+                gemini_chain = prompt | gemini_llm
+                response = gemini_chain.invoke({"article_markdown": markdown})
+            except Exception as gemini_exc:
+                print(f"--- GEMINI FALLBACK FAILED: {gemini_exc} ---")
+                raise exc
+        else:
+            raise
+
 
     try:
         if isinstance(response, ClaimExtractionResult):
@@ -405,8 +420,9 @@ def _extract_claims_with_llm(markdown: str, top_n: int) -> list[dict[str, Any]]:
 
 def extraction_node(state: AgentState) -> AgentState:
     """LangGraph node: route URL/TEXT -> extract -> rank top-N."""
-    resolved_input = str(state.get("user_input") or state.get("input_url") or "").strip()
-    top_n = int(state.get("top_n", 3))
+    resolved_input = (state.get("user_input") or state.get("input_url") or "").strip()
+    top_n_val = state.get("top_n")
+    top_n = int(top_n_val) if top_n_val is not None else 3
     evidence_map = state.get("evidence_map", {})
     verdicts = state.get("verdicts", [])
     truncated_markdown = ""

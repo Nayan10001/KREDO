@@ -5,10 +5,11 @@ Wrapper for the Jina Reader API used by Agent 1 (Claim Extraction)
 to scrape article content as clean markdown from a URL.
 """
 
-import os
 import logging
+import os
 
 import httpx
+from utils.retry import retry_async
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class JinaService:
         self.api_key = os.getenv("JINA_READER_API_KEY")
         self.base_url = "https://r.jina.ai"
 
+    @retry_async
     async def scrape_url(self, url: str) -> str:
         """
         Scrape a URL and return cleaned markdown content via Jina Reader.
@@ -36,7 +38,7 @@ class JinaService:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=8.0) as client:
             response = await client.get(
                 f"{self.base_url}/{url}",
                 headers=headers,

@@ -5,10 +5,11 @@ Wrapper for the Tavily search API used by Agent 2 (Fact Checker)
 for real-time web verification of claims.
 """
 
-import os
 import logging
+import os
 
 import httpx
+from utils.retry import retry_async
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class TavilyService:
         self.api_key = os.getenv("TAVILY_API_KEY")
         self.base_url = "https://api.tavily.com"
 
+    @retry_async
     async def search(self, query: str, max_results: int = 5) -> dict:
         """
         Search Tavily for verification of a claim.
@@ -31,7 +33,7 @@ class TavilyService:
         Returns:
             Tavily API response as a dict.
         """
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.post(
                 f"{self.base_url}/search",
                 json={

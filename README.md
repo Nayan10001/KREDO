@@ -217,6 +217,36 @@ Visit the local Vite URL, typically `http://localhost:5173`.
 
 ---
 
+## 🧪 Testing & Evaluation
+
+KREDO includes an automated test suite and an evaluation harness to benchmark and verify the accuracy of the multi-agent pipeline.
+
+### Running Automated Tests
+
+To run the unit and integration tests (built with `pytest`):
+
+```bash
+# From the project root, with your virtual environment active
+python -m pytest
+```
+
+### Running the Evaluation Harness
+
+The evaluation harness processes a set of pre-defined test cases (located in `backend/data/eval_dataset.json`), extracting and fact-checking claims, and comparing them against expected ground truth.
+
+To run the evaluation harness:
+
+```bash
+# Run evaluation on a subset of test cases (e.g. 5 cases)
+python backend/scripts/run_eval.py 5
+```
+> [!TIP]
+> On Windows, prepend `$env:PYTHONIOENCODING="utf-8"` (for PowerShell) or `set PYTHONIOENCODING=utf-8` (for CMD) to prevent terminal Unicode encoding crashes during status printing.
+
+The script generates a detailed Markdown report at `backend/data/eval_report.md` detailing verdict accuracy, token match scores, and domain-level citation precision and recall metrics.
+
+---
+
 ## 🛠️ Notes
 
 - **Security:** Ensure that `.env` files and secrets are never committed to Git.

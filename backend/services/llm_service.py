@@ -5,10 +5,11 @@ Wrapper for the Groq API used by Agent 2 (Fact Checker)
 for natural language analysis & reasoning about article authenticity.
 """
 
-import os
 import logging
+import os
 
 from groq import Groq
+from utils.retry import retry_async
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class LLMService:
             api_key=os.getenv("GROQ_API_KEY"),
         )
 
+    @retry_async
     async def analyze_article(self, article: dict, tavily_report: str) -> str:
         """
         Feed article + Tavily fact-check results to Groq LLM for analysis.
@@ -56,4 +58,4 @@ Provide analysis in JSON format with:
             messages=[{"role": "user", "content": prompt}],
         )
 
-        return chat_completion.choices[0].message.content
+        return chat_completion.choices[0].message.content or ""

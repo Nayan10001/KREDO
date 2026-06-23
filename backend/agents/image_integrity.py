@@ -33,6 +33,7 @@ import requests
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
+from utils.retry import retry_sync
 
 if TYPE_CHECKING:
     from agents.claim_extraction import AgentState
@@ -100,6 +101,7 @@ _TRANSLATE_PROMPT = ChatPromptTemplate.from_messages([
 # Helper: fetch image bytes
 # ---------------------------------------------------------------------------
 
+@retry_sync
 def _fetch_image_bytes(url: str) -> bytes | None:
     """Download image bytes from a URL.
 
@@ -160,6 +162,7 @@ def _check_exif(image_bytes: bytes) -> dict[str, Any]:
 # Helper: Sarvam document_intelligence OCR (async job pipeline)
 # ---------------------------------------------------------------------------
 
+@retry_sync
 def _run_sarvam_ocr(image_bytes: bytes) -> str:
     """
     Run OCR via Sarvam AI document_intelligence async job pipeline.
@@ -245,6 +248,7 @@ def _run_sarvam_ocr(image_bytes: bytes) -> str:
 # Helper: translate OCR text to English via ChatGroq
 # ---------------------------------------------------------------------------
 
+@retry_sync
 def _translate_ocr_to_english(text: str) -> str:
     """
     Translate raw OCR text (potentially Indic / mixed-script) to English.
@@ -275,9 +279,19 @@ def _translate_ocr_to_english(text: str) -> str:
         )
         chain = _TRANSLATE_PROMPT | llm
         response = chain.invoke({"text": text})
-        translated = (
-            response.content if hasattr(response, "content") else str(response)
-        ).strip()
+        content = response.content
+        if isinstance(content, list):
+            parts = []
+            for block in content:
+                if isinstance(block, str):
+                    parts.append(block)
+                elif isinstance(block, dict) and "text" in block:
+                    parts.append(str(block["text"]))
+            translated = "".join(parts).strip()
+        elif content is not None:
+            translated = str(content).strip()
+        else:
+            translated = str(response).strip()
         return translated if translated else text
     except Exception as exc:  # noqa: BLE001
         logger.warning("[Agent6] OCR translation failed: %s — returning raw text", exc)

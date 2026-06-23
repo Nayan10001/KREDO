@@ -1,0 +1,312 @@
+[
+  {
+    "input_text": "Iran Allows Two Indian LPG Carriers Through Strait of Hormuz Amid Blockade",
+    "expected_claims": [
+      {
+        "claim_text": "Iran allowed two Indian LPG carriers through the Strait of Hormuz amid a blockade.",
+        "verdict": "SUPPORTED",
+        "domains": ["egyptoil-gas.com", "indiatimes.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "Trump warns of more strikes on Iran's Kharg Island, pressures allies to secure oil chokepoint",
+    "expected_claims": [
+      {
+        "claim_text": "Trump warned of more strikes on Iran's Kharg Island.",
+        "verdict": "SUPPORTED",
+        "domains": ["aawsat.com", "nytimes.com"]
+      },
+      {
+        "claim_text": "Trump pressured allies to secure the oil chokepoint.",
+        "verdict": "SUPPORTED",
+        "domains": ["firstpost.com", "agbull.com", "koreaherald.com"]
+      },
+      {
+        "claim_text": "Iran's Kharg Island is an oil chokepoint.",
+        "verdict": "SUPPORTED",
+        "domains": ["theguardian.com", "tradingview.com", "abcnews.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "Drinking lemon with warm water every morning can increase human IQ by up to 20 points in just 2 weeks.",
+    "expected_claims": [
+      {
+        "claim_text": "Drinking lemon with warm water every morning can increase human IQ by up to 20 points in just 2 weeks.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "The memory recall of participants increased by up to 65%.",
+    "expected_claims": [
+      {
+        "claim_text": "The memory recall of participants increased by up to 65%.",
+        "verdict": "SUPPORTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Universities may recommend the lemon water routine to students to improve learning.",
+    "expected_claims": [
+      {
+        "claim_text": "Universities may recommend the lemon water routine to students to improve learning.",
+        "verdict": "SUPPORTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "NASA discovered a new habitable planet in the Andromeda galaxy in 2024.",
+    "expected_claims": [
+      {
+        "claim_text": "NASA discovered a new habitable planet in the Andromeda galaxy.",
+        "verdict": "UNVERIFIED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Drinking coffee reduces the risk of heart disease by 90%.",
+    "expected_claims": [
+      {
+        "claim_text": "Drinking coffee reduces the risk of heart disease by 90%.",
+        "verdict": "MISLEADING",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "The Eiffel Tower was moved to London in 2024.",
+    "expected_claims": [
+      {
+        "claim_text": "The Eiffel Tower was moved to London in 2024.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "The World Health Organization officially declared the end of the global COVID-19 emergency in May 2023.",
+    "expected_claims": [
+      {
+        "claim_text": "The World Health Organization declared the end of the COVID-19 emergency in May 2023.",
+        "verdict": "SUPPORTED",
+        "domains": ["who.int", "bbc.com", "reuters.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "Consuming raw garlic cures cancer within three days.",
+    "expected_claims": [
+      {
+        "claim_text": "Consuming raw garlic cures cancer within three days.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "A new law in France makes it illegal to send work emails after 6 PM.",
+    "expected_claims": [
+      {
+        "claim_text": "A law in France makes it illegal to send work emails after 6 PM.",
+        "verdict": "MISLEADING",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "A submarine carrying tourists to the Titanic wreckage went missing in June 2023.",
+    "expected_claims": [
+      {
+        "claim_text": "A submarine carrying tourists to the Titanic wreckage went missing in June 2023.",
+        "verdict": "SUPPORTED",
+        "domains": ["bbc.com", "reuters.com", "nytimes.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "The population of India surpassed that of China in 2023.",
+    "expected_claims": [
+      {
+        "claim_text": "The population of India surpassed that of China in 2023.",
+        "verdict": "SUPPORTED",
+        "domains": ["un.org", "reuters.com", "bbc.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "The UK re-entered the European Union in January 2025.",
+    "expected_claims": [
+      {
+        "claim_text": "The UK re-entered the European Union in January 2025.",
+        "verdict": "UNVERIFIED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "A viral video shows a shark swimming in a flooded highway during Hurricane Ian.",
+    "expected_claims": [
+      {
+        "claim_text": "A shark was swimming in a flooded highway during Hurricane Ian.",
+        "verdict": "CONTRADICTED",
+        "domains": ["apnews.com", "snopes.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "Bananas contain radioactive potassium, meaning eating one can give you radiation sickness.",
+    "expected_claims": [
+      {
+        "claim_text": "Eating one banana can give you radiation sickness.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "An asteroid named 2024 BX1 burned up over Germany in January 2024.",
+    "expected_claims": [
+      {
+        "claim_text": "Asteroid 2024 BX1 burned up over Germany in January 2024.",
+        "verdict": "SUPPORTED",
+        "domains": ["nasa.gov", "reuters.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "Artificial intelligence has officially achieved full artificial general intelligence (AGI) as of 2024.",
+    "expected_claims": [
+      {
+        "claim_text": "Artificial intelligence achieved full artificial general intelligence (AGI) as of 2024.",
+        "verdict": "UNVERIFIED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Eating chocolate helps you lose weight faster according to a major scientific study.",
+    "expected_claims": [
+      {
+        "claim_text": "Eating chocolate helps you lose weight faster.",
+        "verdict": "MISLEADING",
+        "domains": ["snopes.com", "vox.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "The Great Wall of China is the only man-made structure visible from space with the naked eye.",
+    "expected_claims": [
+      {
+        "claim_text": "The Great Wall of China is visible from space with the naked eye.",
+        "verdict": "CONTRADICTED",
+        "domains": ["nasa.gov", "snopes.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "In 2023, the FDA approved the first-ever vaccine for RSV in older adults.",
+    "expected_claims": [
+      {
+        "claim_text": "The FDA approved the first-ever vaccine for RSV in older adults in 2023.",
+        "verdict": "SUPPORTED",
+        "domains": ["fda.gov", "cdc.gov", "apnews.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "The city of Venice dried up completely in 2024, leaving canals empty.",
+    "expected_claims": [
+      {
+        "claim_text": "The city of Venice dried up completely in 2024.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Winston Churchill was a member of the British royal family.",
+    "expected_claims": [
+      {
+        "claim_text": "Winston Churchill was a member of the British royal family.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Microchips are embedded in the new 2000 rupee notes issued by RBI to track black money.",
+    "expected_claims": [
+      {
+        "claim_text": "Microchips are embedded in the new 2000 rupee notes issued by RBI.",
+        "verdict": "CONTRADICTED",
+        "domains": ["rbi.org.in", "boomlive.in", "altnews.in"]
+      }
+    ]
+  },
+  {
+    "input_text": "Finland was voted the happiest country in the world for the seventh consecutive year in 2024.",
+    "expected_claims": [
+      {
+        "claim_text": "Finland was voted the happiest country in the world for the seventh consecutive year in 2024.",
+        "verdict": "SUPPORTED",
+        "domains": ["un.org", "reuters.com", "cnn.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "A new study claims that regular exercise can prevent aging entirely.",
+    "expected_claims": [
+      {
+        "claim_text": "Regular exercise can prevent aging entirely.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Microsoft acquired Apple for $2 trillion in late 2024.",
+    "expected_claims": [
+      {
+        "claim_text": "Microsoft acquired Apple for $2 trillion in late 2024.",
+        "verdict": "UNVERIFIED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Taylor Swift announced her retirement from music to pursue a career in politics in 2025.",
+    "expected_claims": [
+      {
+        "claim_text": "Taylor Swift announced her retirement from music.",
+        "verdict": "CONTRADICTED",
+        "domains": []
+      }
+    ]
+  },
+  {
+    "input_text": "Humans only use 10% of their brain capacity.",
+    "expected_claims": [
+      {
+        "claim_text": "Humans only use 10% of their brain capacity.",
+        "verdict": "CONTRADICTED",
+        "domains": ["scientificamerican.com", "snopes.com"]
+      }
+    ]
+  },
+  {
+    "input_text": "Water boils at a lower temperature at high altitudes.",
+    "expected_claims": [
+      {
+        "claim_text": "Water boils at a lower temperature at high altitudes.",
+        "verdict": "SUPPORTED",
+        "domains": ["britannica.com"]
+      }
+    ]
+  }
+]

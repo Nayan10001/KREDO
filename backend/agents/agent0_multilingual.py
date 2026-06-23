@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 from dotenv import load_dotenv
+from utils.retry import retry_sync
 
 if TYPE_CHECKING:
     from agents.claim_extraction import AgentState
@@ -156,6 +157,7 @@ def _get_api_key() -> str:
 # Sarvam API helpers
 # ---------------------------------------------------------------------------
 
+@retry_sync
 def _detect_language(text: str) -> tuple[str, float]:
     """
     Detect the language of input text using Sarvam AI /text-lid endpoint.
@@ -191,6 +193,7 @@ def _detect_language(text: str) -> tuple[str, float]:
         return _heuristic_detect(text)
 
 
+@retry_sync
 def _translate_to_english(text: str, source_lang: str) -> str:
     """
     Translate text from source_lang to English ("en-IN") using Sarvam AI.
@@ -236,6 +239,7 @@ def _translate_to_english(text: str, source_lang: str) -> str:
         return text
 
 
+@retry_sync
 def _translate_from_english(text: str, target_lang: str) -> str:
     """
     Translate text from English ("en-IN") back to target_lang using Sarvam AI.
@@ -301,10 +305,10 @@ def agent0_pre_node(state: "AgentState") -> dict:
     """
     try:
         # ── Feature flag ────────────────────────────────────────────────────
-        if str(_MULTILINGUAL_ENABLED).lower() == "false":
+        if _MULTILINGUAL_ENABLED.lower() == "false":
             return {}
 
-        user_input: str = str(state.get("user_input") or "").strip()
+        user_input: str = (state.get("user_input") or "").strip()
         if not user_input:
             return {}
 
@@ -400,7 +404,7 @@ def agent0_post_node(state: "AgentState") -> dict:
         if not state.get("is_translated"):
             return {}
 
-        target_lang: str = str(state.get("source_language") or "")
+        target_lang: str = state.get("source_language") or ""
         if not target_lang or target_lang not in SUPPORTED_LANGUAGES:
             return {}
 

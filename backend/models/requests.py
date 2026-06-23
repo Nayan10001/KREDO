@@ -5,6 +5,7 @@ Defines request schemas for the API endpoints.
 """
 
 from typing import Optional
+
 from pydantic import BaseModel
 
 

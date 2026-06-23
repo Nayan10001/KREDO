@@ -6,9 +6,7 @@ import json
 from pathlib import Path
 
 from dotenv import load_dotenv
-
-from services.history_store import HistoryStoreError
-from services.history_store import history_store
+from services.history_store import HistoryStoreError, history_store
 
 
 def migrate() -> None:
