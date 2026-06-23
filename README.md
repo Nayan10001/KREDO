@@ -176,6 +176,11 @@ Create `backend/.env` first and add the keys listed above.
 
 ```bash
 # Navigate to the project root
+
+# Option A: Using uv (Recommended - installs all dependencies and sets up .venv)
+uv sync
+
+# Option B: Using standard Python venv & pip
 python -m venv .venv
 
 # Activate virtual environment
@@ -184,8 +189,8 @@ python -m venv .venv
 # On Mac/Linux:
 # source .venv/bin/activate
 
-# Install dependencies
-pip install -r backend/requirements.txt
+# Install dependencies (editable mode)
+pip install -e .
 
 # Start the FastAPI server
 python backend/main.py
