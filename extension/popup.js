@@ -1,4 +1,5 @@
 const API_URL = 'http://localhost:8000';
+let activeEs = null;
 
 // ─── Analyze logic ──────────────────────────────────────
 async function runAnalysis(inputString) {
@@ -41,7 +42,11 @@ async function runAnalysis(inputString) {
 
     appendStep("Initializing connection...");
 
+    if (activeEs) {
+        activeEs.close();
+    }
     const es = new EventSource(`${API_URL}/api/analyze-stream?user_input=${encodeURIComponent(inputString)}&top_n=1`);
+    activeEs = es;
 
     let collectedVerdicts = [];
     let collectedExplanations = {};
@@ -58,6 +63,7 @@ async function runAnalysis(inputString) {
 
         if (data.status === 'complete') {
             es.close();
+            activeEs = null;
             if (currentStepEl) {
                 currentStepEl.classList.remove('step-active');
                 currentStepEl.classList.add('step-done');
@@ -181,11 +187,12 @@ async function runAnalysis(inputString) {
 
     es.onerror = () => {
         es.close();
+        activeEs = null;
         showError('Analysis stream interrupted or failed.');
     };
 }
 
-// Function to query active tab and update initial UI state
+// Function to query active tab and update initial UI state or reset on tab switch
 async function updateCurrentTab() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -196,10 +203,36 @@ async function updateCurrentTab() {
         const notArticleIntro = document.getElementById('not-article-intro');
         const internalPageMsg = document.getElementById('internal-page-msg');
 
+        const currentDisplayedUrl = currentUrlEl?.textContent || '';
+
+        // If the active tab URL has changed compared to what we've loaded/analyzed before,
+        // automatically stop any running analysis, clear previous results, and reset the view.
+        if (url && url !== currentDisplayedUrl) {
+            if (activeEs) {
+                activeEs.close();
+                activeEs = null;
+            }
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+            document.getElementById('not-article').classList.remove('hidden');
+            
+            // Automatically input the new URL
+            const queryInput = document.getElementById('query-input');
+            if (queryInput) {
+                if (url.startsWith('http://') || url.startsWith('https://')) {
+                    queryInput.value = url;
+                } else {
+                    queryInput.value = '';
+                }
+            }
+        }
+
         // Only update UI if we are in the initial setup screen (not loading, result, or error states)
         const isNotArticleVisible = !document.getElementById('not-article').classList.contains('hidden');
 
         if (isNotArticleVisible) {
+            const queryInput = document.getElementById('query-input');
             if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
                 if (currentUrlEl) {
                     currentUrlEl.textContent = url;
@@ -209,12 +242,18 @@ async function updateCurrentTab() {
                 if (orDivider) orDivider.classList.remove('hidden');
                 if (notArticleIntro) notArticleIntro.classList.remove('hidden');
                 if (internalPageMsg) internalPageMsg.classList.add('hidden');
+
+                // If query input is empty or has mismatched values, auto-populate it
+                if (queryInput && (!queryInput.value || queryInput.value.startsWith('http://') || queryInput.value.startsWith('https://'))) {
+                    queryInput.value = url;
+                }
             } else {
                 if (currentUrlEl) currentUrlEl.classList.add('hidden');
                 if (analyzeBtn) analyzeBtn.classList.add('hidden');
                 if (orDivider) orDivider.classList.add('hidden');
                 if (notArticleIntro) notArticleIntro.classList.add('hidden');
                 if (internalPageMsg) internalPageMsg.classList.remove('hidden');
+                if (queryInput) queryInput.value = '';
             }
         }
     } catch (e) {
@@ -254,6 +293,30 @@ document.getElementById('analyze-query-btn')?.addEventListener('click', () => {
     } else {
         showError('Please enter a query or URL.');
     }
+});
+
+// Register Stop/Cancel button listener
+document.getElementById('cancel-btn')?.addEventListener('click', () => {
+    if (activeEs) {
+        activeEs.close();
+        activeEs = null;
+    }
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('not-article').classList.remove('hidden');
+
+    // Repopulate input field with current URL on cancel
+    const queryInput = document.getElementById('query-input');
+    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+        const url = tab?.url || '';
+        if (queryInput) {
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                queryInput.value = url;
+            } else {
+                queryInput.value = '';
+            }
+        }
+        updateCurrentTab();
+    });
 });
 
 // ─── Error handling ─────────────────────────────────────

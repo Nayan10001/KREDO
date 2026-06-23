@@ -307,10 +307,19 @@ export default function VerifyView({
                                         multi-agent pipeline
                                     </span>
                                     {isAnalyzing && !isComplete && (
-                                        <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-300 ml-auto bg-emerald-500/10 px-2 py-0.5 rounded-full ring-1 ring-emerald-500/20">
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                            <span>running</span>
-                                        </span>
+                                        <div className="flex items-center gap-2 ml-auto">
+                                            <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full ring-1 ring-emerald-500/20">
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                <span>running</span>
+                                            </span>
+                                            <button
+                                                onClick={resetStream}
+                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-mono text-[10px] ring-1 ring-inset ring-rose-500/25 cursor-pointer transition select-none"
+                                                title="Stop current analysis"
+                                            >
+                                                <span>Stop</span>
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
 

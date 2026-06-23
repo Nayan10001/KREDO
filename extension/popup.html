@@ -467,6 +467,27 @@
             background: rgba(55, 255, 129, 0.08);
         }
 
+        .cancel-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: rgba(255, 127, 127, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(255, 127, 127, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        .cancel-btn:hover {
+            background: rgba(255, 127, 127, 0.22);
+            border-color: var(--danger);
+            color: #ffd2d2;
+        }
+
         button:focus-visible,
         input:focus-visible {
             outline: 2px solid var(--accent);
@@ -506,6 +527,7 @@
         <div id="loading" class="hidden">
             <div class="pipeline-progress" id="pipeline-steps"></div>
             <div class="pipeline-eta" id="pipeline-eta">This usually takes 20–40 seconds</div>
+            <button id="cancel-btn" class="cancel-btn">Stop Analysis</button>
         </div>
 
         <!-- Result -->
