@@ -114,6 +114,39 @@ async function runAnalysis(inputString) {
                 verdictText.textContent = 'Unverified';
                 verdictDesc.textContent = bottomLine || 'Could not be fully verified with available evidence.';
             }
+
+            // Render claims list
+            const claimsContainer = document.getElementById('claims-container');
+            const claimsList = document.getElementById('claims-list');
+            if (claimsContainer && claimsList) {
+                claimsList.innerHTML = '';
+                if (verdicts && verdicts.length > 0) {
+                    claimsContainer.classList.remove('hidden');
+                    verdicts.forEach(v => {
+                        const item = document.createElement('div');
+                        item.className = 'claim-item';
+                        
+                        let badgeClass = 'badge-unverified';
+                        let label = v.verdict || 'UNVERIFIED';
+                        
+                        if (label === 'SUPPORTED') badgeClass = 'badge-supported';
+                        else if (label === 'CONTRADICTED') badgeClass = 'badge-contradicted';
+                        else if (label === 'MISLEADING') badgeClass = 'badge-misleading';
+                        
+                        item.innerHTML = `
+                            <div class="claim-verdict-row">
+                                <span class="claim-badge ${badgeClass}">${label}</span>
+                                <span style="font-size: 10px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;">${v.truth_score || 50}% match</span>
+                            </div>
+                            <div class="claim-text">${v.claim_text}</div>
+                        `;
+                        claimsList.appendChild(item);
+                    });
+                } else {
+                    claimsContainer.classList.add('hidden');
+                }
+            }
+
             return;
         }
 
@@ -152,6 +185,38 @@ async function runAnalysis(inputString) {
     };
 }
 
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const url = tab?.url || '';
+        const currentUrlEl = document.getElementById('current-url');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const orDivider = document.querySelector('.or-divider');
+        const notArticleIntro = document.getElementById('not-article-intro');
+        const internalPageMsg = document.getElementById('internal-page-msg');
+        
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            if (currentUrlEl) {
+                currentUrlEl.textContent = url;
+                currentUrlEl.classList.remove('hidden');
+            }
+            if (analyzeBtn) analyzeBtn.classList.remove('hidden');
+            if (orDivider) orDivider.classList.remove('hidden');
+            if (notArticleIntro) notArticleIntro.classList.remove('hidden');
+            if (internalPageMsg) internalPageMsg.classList.add('hidden');
+        } else {
+            if (currentUrlEl) currentUrlEl.classList.add('hidden');
+            if (analyzeBtn) analyzeBtn.classList.add('hidden');
+            if (orDivider) orDivider.classList.add('hidden');
+            if (notArticleIntro) notArticleIntro.classList.add('hidden');
+            if (internalPageMsg) internalPageMsg.classList.remove('hidden');
+        }
+    } catch (e) {
+        console.error('Failed to query current active tab:', e);
+    }
+});
+
 document.getElementById('analyze-btn').addEventListener('click', async () => {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -183,6 +248,8 @@ function showError(message) {
 document.getElementById('retry-btn')?.addEventListener('click', () => {
     document.getElementById('error-state').classList.add('hidden');
     document.getElementById('not-article').classList.remove('hidden');
+    // Trigger tab logic check on retry
+    document.dispatchEvent(new Event('DOMContentLoaded'));
 });
 
 // ─── View Deep Analysis → opens website ──────────────────

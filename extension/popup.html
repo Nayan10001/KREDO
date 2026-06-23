@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KREDO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-base: #060907;
@@ -31,13 +34,14 @@
         }
 
         body {
-            width: 340px;
-            padding: 14px;
-            font-family: 'IBM Plex Mono', monospace;
+            width: 350px;
+            padding: 16px;
+            font-family: 'Inter', sans-serif;
             background:
-                radial-gradient(420px 160px at 0% 0%, rgba(55, 255, 129, 0.08), transparent 70%),
+                radial-gradient(400px 200px at 50% 0%, rgba(55, 255, 129, 0.09), transparent 70%),
                 var(--bg-base);
             color: var(--text-primary);
+            line-height: 1.5;
         }
 
         .header {
@@ -125,6 +129,7 @@
             line-height: 1.4;
             max-height: 40px;
             overflow: hidden;
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         #analyze-btn {
@@ -168,6 +173,7 @@
         .or-divider span {
             font-size: 11px;
             color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         #query-input {
@@ -217,11 +223,23 @@
             transform: scale(0.98);
         }
 
+        .internal-msg-card {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            line-height: 1.55;
+        }
+
         .pipeline-progress {
             display: flex;
             flex-direction: column;
             gap: 6px;
             padding: 4px 2px;
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         .pipeline-step {
@@ -263,6 +281,7 @@
             font-size: 11px;
             color: var(--text-muted);
             text-align: center;
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         .verdict {
@@ -312,6 +331,7 @@
             font-weight: 700;
             padding: 3px 9px;
             border-radius: 20px;
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         .verdict-fake .score-badge       { background: rgba(201, 75, 75, 0.2); color: #ffd2d2; }
@@ -323,6 +343,75 @@
             color: var(--text-secondary);
             margin: 6px 0 0;
             line-height: 1.55;
+        }
+
+        .claims-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 14px;
+            margin-bottom: 6px;
+        }
+        
+        .claim-item {
+            font-size: 11.5px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .claim-verdict-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .claim-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .claim-text {
+            color: var(--text-primary);
+            line-height: 1.4;
+            font-weight: 500;
+            font-size: 11px;
+        }
+
+        .badge-supported {
+            background: rgba(112, 255, 158, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(112, 255, 158, 0.3);
+        }
+
+        .badge-contradicted {
+            background: rgba(255, 127, 127, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(255, 127, 127, 0.3);
+        }
+
+        .badge-misleading {
+            background: rgba(242, 208, 107, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(242, 208, 107, 0.3);
+        }
+
+        .badge-unverified {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         #view-details {
@@ -399,9 +488,12 @@
 
         <!-- Initial state -->
         <div id="not-article">
-            <p>Scan this page with our multi-agent AI pipeline to check for misinformation.</p>
+            <p id="not-article-intro">Scan this page with our multi-agent AI pipeline to check for misinformation.</p>
             <div id="current-url" class="page-url"></div>
             <button id="analyze-btn" style="margin-bottom: 10px;">Analyze This Page</button>
+            <div id="internal-page-msg" class="internal-msg-card hidden">
+                🛡️ You are currently on an internal browser page. You can paste a web URL or enter raw text in the input field below to start fact-checking.
+            </div>
 
             <div class="or-divider"><span>OR</span></div>
 
@@ -423,6 +515,10 @@
                     <span id="score-badge" class="score-badge"></span>
                 </div>
                 <p id="verdict-description"></p>
+                <div id="claims-container" class="hidden">
+                    <div class="claims-header">Claims Analyzed:</div>
+                    <div id="claims-list"></div>
+                </div>
                 <button id="view-details">View Deep Analysis →</button>
             </div>
         </div>
