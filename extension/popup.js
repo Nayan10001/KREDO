@@ -185,8 +185,8 @@ async function runAnalysis(inputString) {
     };
 }
 
-// Initialize on DOM load
-document.addEventListener('DOMContentLoaded', async () => {
+// Function to query active tab and update initial UI state
+async function updateCurrentTab() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         const url = tab?.url || '';
@@ -195,27 +195,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         const orDivider = document.querySelector('.or-divider');
         const notArticleIntro = document.getElementById('not-article-intro');
         const internalPageMsg = document.getElementById('internal-page-msg');
-        
-        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-            if (currentUrlEl) {
-                currentUrlEl.textContent = url;
-                currentUrlEl.classList.remove('hidden');
+
+        // Only update UI if we are in the initial setup screen (not loading, result, or error states)
+        const isNotArticleVisible = !document.getElementById('not-article').classList.contains('hidden');
+
+        if (isNotArticleVisible) {
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                if (currentUrlEl) {
+                    currentUrlEl.textContent = url;
+                    currentUrlEl.classList.remove('hidden');
+                }
+                if (analyzeBtn) analyzeBtn.classList.remove('hidden');
+                if (orDivider) orDivider.classList.remove('hidden');
+                if (notArticleIntro) notArticleIntro.classList.remove('hidden');
+                if (internalPageMsg) internalPageMsg.classList.add('hidden');
+            } else {
+                if (currentUrlEl) currentUrlEl.classList.add('hidden');
+                if (analyzeBtn) analyzeBtn.classList.add('hidden');
+                if (orDivider) orDivider.classList.add('hidden');
+                if (notArticleIntro) notArticleIntro.classList.add('hidden');
+                if (internalPageMsg) internalPageMsg.classList.remove('hidden');
             }
-            if (analyzeBtn) analyzeBtn.classList.remove('hidden');
-            if (orDivider) orDivider.classList.remove('hidden');
-            if (notArticleIntro) notArticleIntro.classList.remove('hidden');
-            if (internalPageMsg) internalPageMsg.classList.add('hidden');
-        } else {
-            if (currentUrlEl) currentUrlEl.classList.add('hidden');
-            if (analyzeBtn) analyzeBtn.classList.add('hidden');
-            if (orDivider) orDivider.classList.add('hidden');
-            if (notArticleIntro) notArticleIntro.classList.add('hidden');
-            if (internalPageMsg) internalPageMsg.classList.remove('hidden');
         }
     } catch (e) {
         console.error('Failed to query current active tab:', e);
     }
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    updateCurrentTab();
 });
+
+// Dynamic tab switching listener for Chrome Side Panel
+if (typeof chrome !== 'undefined' && chrome.tabs) {
+    chrome.tabs.onActivated.addListener(updateCurrentTab);
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.url) {
+            updateCurrentTab();
+        }
+    });
+}
 
 document.getElementById('analyze-btn').addEventListener('click', async () => {
     try {
@@ -248,8 +268,7 @@ function showError(message) {
 document.getElementById('retry-btn')?.addEventListener('click', () => {
     document.getElementById('error-state').classList.add('hidden');
     document.getElementById('not-article').classList.remove('hidden');
-    // Trigger tab logic check on retry
-    document.dispatchEvent(new Event('DOMContentLoaded'));
+    updateCurrentTab();
 });
 
 // ─── View Deep Analysis → opens website ──────────────────

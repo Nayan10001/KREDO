@@ -7,6 +7,14 @@
 
 const API_URL = 'http://localhost:8000';
 
+// Open the side panel when the extension icon is clicked
+chrome.runtime.onInstalled.addListener(() => {
+    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+        chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+            .catch((error) => console.error('Error setting panel behavior:', error));
+    }
+});
+
 // Listen for messages from content script or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'ANALYZE_URL') {

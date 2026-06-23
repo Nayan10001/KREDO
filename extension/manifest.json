@@ -5,13 +5,15 @@
     "description": "AI-Powered Misinformation Detection — Quick fake/real verdict while browsing.",
     "permissions": [
         "activeTab",
-        "storage"
+        "storage",
+        "sidePanel"
     ],
     "host_permissions": [
         "http://localhost:8000/*"
     ],
-    "action": {
-        "default_popup": "popup.html"
+    "action": {},
+    "side_panel": {
+        "default_path": "popup.html"
     },
     "background": {
         "service_worker": "background.js"
